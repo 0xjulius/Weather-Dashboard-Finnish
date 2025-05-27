@@ -27,6 +27,7 @@ function App() {
           gyroControls: false,
           minHeight: 200.0,
           minWidth: 200.0,
+          maxFps: 30,
         })
       );
     }

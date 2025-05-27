@@ -57,6 +57,10 @@ export default function WeatherCard({ city, latitude, longitude }) {
   const current = weather.current_weather;
   const daily = weather.daily;
 
+  // Muutetaan tuulen nopeus km/h -> m/s, pyöristetään 2 desimaaliin
+  const windSpeedMs = Math.round(current.windspeed * 0.27778);
+
+
   const avgHumidity =
     daily.relative_humidity_2m_max && daily.relative_humidity_2m_min
       ? Math.round(
@@ -114,8 +118,10 @@ export default function WeatherCard({ city, latitude, longitude }) {
   };
 
   return (
-    <div className="w-64 bg-[#151515] rounded-xl overflow-hidden shadow-2xl border border-[#232323] font-inter m-4 transform transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-lg"
-    style={{ willChange: "transform" }}>
+    <div
+      className="w-64 bg-[#151515] rounded-xl overflow-hidden shadow-2xl border border-[#232323] font-inter m-4 transform transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-lg"
+      style={{ willChange: "transform" }}
+    >
       {/* Header */}
       <div className="px-6 pt-6 pb-4 border-b border-[#232323]">
         <div className="flex items-center justify-between">
@@ -139,7 +145,7 @@ export default function WeatherCard({ city, latitude, longitude }) {
             </div>
             <p className="text-gray-400 text-sm mt-1 flex items-center gap-1">
               <WiStrongWind size={18} />
-              Tuuli {Math.round(current.windspeed)} km/h
+              Tuuli {windSpeedMs} m/s
             </p>
           </div>
 
@@ -166,9 +172,7 @@ export default function WeatherCard({ city, latitude, longitude }) {
           <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">
             Tuuli
           </p>
-          <p className="text-gray-300 font-medium mt-1">
-            {Math.round(current.windspeed)} km/h
-          </p>
+          <p className="text-gray-300 font-medium mt-1">{windSpeedMs} m/s</p>
         </div>
         <div className="px-2 py-3 flex flex-col items-center">
           <WiThermometer size={28} className="text-gray-500" />
