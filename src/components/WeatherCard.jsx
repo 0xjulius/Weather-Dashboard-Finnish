@@ -210,7 +210,7 @@ export default function WeatherCard({ city, latitude, longitude }) {
       {/* Stats */}
       <div className="px-6 py-4 bg-[#171717] grid grid-cols-3 gap-2 text-center">
         <div className="px-2 py-3 flex flex-col items-center">
-          <WiHumidity size={28} className="text-gray-500" />
+          <WiHumidity size={28} className="text-blue-300" />
           <p className="text-xs text-gray-500 uppercase tracking-wide mt-5 ">
             Kosteus
           </p>
@@ -219,7 +219,7 @@ export default function WeatherCard({ city, latitude, longitude }) {
           </p>
         </div>
         <div className="px-2 py-3 flex flex-col items-center">
-          <WiDaySunny size={28} className="text-yellow-400" />
+          <WiDaySunny size={28} className="text-yellow-200" />
           <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">
             UV-indeksi
           </p>
@@ -228,7 +228,7 @@ export default function WeatherCard({ city, latitude, longitude }) {
           </p>
         </div>
         <div className="px-2 py-3 flex flex-col items-center">
-          <WiThermometer size={28} className="text-gray-500" />
+          <WiThermometer size={28} className="text-red-400" />
           <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">
             Tuntuu kuin
           </p>
