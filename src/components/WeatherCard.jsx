@@ -1,3 +1,4 @@
+// --- Ei muutoksia import-osioon ---
 import React, { useEffect, useState } from "react";
 import axios from "axios";
 import {
@@ -17,6 +18,15 @@ import {
   WiThunderstorm,
   WiHail,
 } from "react-icons/wi";
+import {
+  LineChart,
+  Line,
+  XAxis,
+  YAxis,
+  Tooltip,
+  ResponsiveContainer,
+  Area
+} from "recharts";
 
 export default function WeatherCard({ city, latitude, longitude }) {
   const [weather, setWeather] = useState(null);
@@ -32,7 +42,8 @@ export default function WeatherCard({ city, latitude, longitude }) {
               longitude,
               current_weather: true,
               daily:
-                "temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,relative_humidity_2m_max,relative_humidity_2m_min,weathercode",
+                "temperature_2m_max,temperature_2m_min,apparent_temperature_max,apparent_temperature_min,relative_humidity_2m_max,relative_humidity_2m_min,weathercode,uv_index_max",
+              hourly: "uv_index",
               timezone: "auto",
             },
           }
@@ -56,10 +67,56 @@ export default function WeatherCard({ city, latitude, longitude }) {
 
   const current = weather.current_weather;
   const daily = weather.daily;
+  const hourly = weather.hourly;
 
-  // Muutetaan tuulen nopeus km/h -> m/s, pyöristetään 2 desimaaliin
+  const now = new Date();
+  let currentUV = null;
+
+  if (hourly?.time && hourly?.uv_index) {
+    const nearestIndex = hourly.time.findIndex((t) => {
+      const hourTime = new Date(t);
+      return (
+        hourTime.getHours() === now.getHours() &&
+        hourTime.getDate() === now.getDate()
+      );
+    });
+
+    if (nearestIndex !== -1) {
+      currentUV = hourly.uv_index[nearestIndex];
+    }
+  }
+
+  // Valmistele UV-käyrän data (12 seuraavaa tuntia)
+  const nowIndex = hourly.time.findIndex(
+    (t) => new Date(t).getTime() >= now.getTime()
+  );
+
+
+  const uvChartData = hourly.time
+    .map((time, i) => {
+      const date = new Date(time);
+      const hour = date.getHours();
+
+      // Vain nykyisen päivän tunnit 6–22
+      if (
+        date.getDate() === now.getDate() &&
+        date.getMonth() === now.getMonth() &&
+        date.getFullYear() === now.getFullYear() &&
+        hour >= 6 &&
+        hour <= 22
+      ) {
+        return {
+          time: hour + ":00",
+          uv: Math.round(hourly.uv_index[i]),
+        };
+      }
+      return null;
+    })
+    .filter(Boolean);
+
+
+
   const windSpeedMs = Math.round(current.windspeed * 0.27778);
-
 
   const avgHumidity =
     daily.relative_humidity_2m_max && daily.relative_humidity_2m_min
@@ -82,7 +139,6 @@ export default function WeatherCard({ city, latitude, longitude }) {
   const getWeekday = (isoDate) =>
     new Date(isoDate).toLocaleDateString("fi-FI", { weekday: "short" });
 
-  // Map weather codes to icons with size param
   const weatherCodeToIcon = (code, size = 24) => {
     if (code === 0)
       return (
@@ -114,14 +170,11 @@ export default function WeatherCard({ city, latitude, longitude }) {
       );
     if ([96, 99].includes(code))
       return <WiHail size={size} className="mx-auto my-1 text-yellow-600" />;
-    return <WiCloud size={size} className="mx-auto my-1 text-gray-400" />; // default fallback
+    return <WiCloud size={size} className="mx-auto my-1 text-gray-400" />;
   };
 
   return (
-    <div
-      className="w-64 bg-[#151515] rounded-xl overflow-hidden shadow-2xl border border-[#232323] font-inter m-4 transform transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-lg"
-      style={{ willChange: "transform" }}
-    >
+    <div className="w-64 bg-[#151515] rounded-xl overflow-hidden shadow-2xl border border-[#232323] font-inter m-4 transform transition-transform duration-300 ease-in-out hover:scale-105 hover:shadow-lg">
       {/* Header */}
       <div className="px-6 pt-6 pb-4 border-b border-[#232323]">
         <div className="flex items-center justify-between">
@@ -148,9 +201,7 @@ export default function WeatherCard({ city, latitude, longitude }) {
               Tuuli {windSpeedMs} m/s
             </p>
           </div>
-
           <div className="text-gray-300">
-            {/* Bigger current weather icon */}
             {weatherCodeToIcon(current.weathercode, 60)}
           </div>
         </div>
@@ -168,11 +219,13 @@ export default function WeatherCard({ city, latitude, longitude }) {
           </p>
         </div>
         <div className="px-2 py-3 flex flex-col items-center">
-          <WiStrongWind size={28} className="text-gray-500" />
+          <WiDaySunny size={28} className="text-yellow-400" />
           <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">
-            Tuuli
+            UV-indeksi
           </p>
-          <p className="text-gray-300 font-medium mt-1">{windSpeedMs} m/s</p>
+          <p className="text-gray-300 font-medium mt-1">
+            {currentUV !== null ? currentUV.toFixed(1) : "–"}
+          </p>
         </div>
         <div className="px-2 py-3 flex flex-col items-center">
           <WiThermometer size={28} className="text-gray-500" />
@@ -184,6 +237,65 @@ export default function WeatherCard({ city, latitude, longitude }) {
           </p>
         </div>
       </div>
+
+      {/* UV Chart */}
+      {uvChartData.length > 0 && (
+        <div className="px-6 py-4 bg-[#1a1a1a] border-t border-[#232323]">
+          <h3 className="text-xs text-gray-400 uppercase mb-2">
+            UV-indeksi tänään klo 06–22
+          </h3>
+          <ResponsiveContainer width="100%" height={160}>
+            <LineChart
+              data={uvChartData}
+              margin={{ top: 20, right: 20, left: -45, bottom: 0 }}
+            >
+              <defs>
+                <linearGradient id="uvGradient" x1="0" y1="0" x2="0" y2="1">
+                  <stop offset="5%" stopColor="#facc15" stopOpacity={0.4} />
+                  <stop offset="95%" stopColor="#facc15" stopOpacity={0} />
+                </linearGradient>
+              </defs>
+              <XAxis
+                dataKey="time"
+                stroke="#666"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+              />
+              <YAxis
+                domain={[0, 6]}
+                stroke="#666"
+                fontSize={11}
+                tickLine={false}
+                axisLine={false}
+              />
+              <Tooltip
+                contentStyle={{
+                  backgroundColor: "#111",
+                  border: "1px solid #333",
+                  fontSize: "0.85rem",
+                }}
+                labelStyle={{ color: "#aaa" }}
+                itemStyle={{ color: "#facc15" }}
+              />
+              <Line
+                type="monotone"
+                dataKey="uv"
+                stroke="#facc15"
+                strokeWidth={2.5}
+                dot={{ r: 0, stroke: "#facc15", fill: "#1a1a1a" }}
+                activeDot={{ r: 5 }}
+              />
+              <Area
+                type="monotone"
+                dataKey="uv"
+                stroke={false}
+                fill="url(#uvGradient)"
+              />
+            </LineChart>
+          </ResponsiveContainer>
+        </div>
+      )}
 
       {/* Forecast */}
       <div className="px-6 py-4 border-t border-[#232323]">
