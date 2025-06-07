@@ -211,7 +211,7 @@ export default function WeatherCard({ city, latitude, longitude }) {
       <div className="px-6 py-4 bg-[#171717] grid grid-cols-3 gap-2 text-center">
         <div className="px-2 py-3 flex flex-col items-center">
           <WiHumidity size={28} className="text-gray-500" />
-          <p className="text-xs text-gray-500 uppercase tracking-wide mt-1">
+          <p className="text-xs text-gray-500 uppercase tracking-wide mt-5 ">
             Kosteus
           </p>
           <p className="text-gray-300 font-medium mt-1">
